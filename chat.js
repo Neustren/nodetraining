@@ -13,39 +13,35 @@ var redisClient = redis.createClient();
 //   console.log(reply);
 // });
 
-var messages = [];
+
 var storeMessage = function(name, data) {
   var message = JSON.stringify({name: name, data: data});
 redisClient.lpush ("messages", message, function(err, response) {
-  if (err) {
-    console.log(err);
-  }
   console.log("Database stored at: " + response);
   redisClient.ltrim("messages", 0, 9);
 })
 
-  messages.push({name: name, data: data});
-  if (messages.length > 10) {
-    messages.shift();
-  }
+  // messages.push({name: name, data: data});
+  // if (messages.length > 10) {
+  //   messages.shift();
+  // }
 };
 
 
 io.on('connection', function(socket){
 socket.on('join', function(name) {
   socket.nickname = name;
-  redisClient.lrange("messages", 0, -1, function(err, messages) {
-    if(err) {
-      console.log(err);
-    }
-    messages = messages.reverse();
-  }
-
-  messages.forEach(function(message) {
+  redisClient.lrange("messages", 0, -1, function(err, msgResp) {
+    msgResp = msgResp.reverse();
+  msgResp.forEach(function(message) {
     message = JSON.parse(message);
     socket.emit("chat message", message.name + ": " + message.data);
-  })
+  });
 });
+
+
+});
+
   console.log('a user connected');
  socket.on('disconnect', function(){
    console.log('user disconnected');
